@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quỹ Tao: Sóng Gió Tín Dụng</title>
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --panel: #151d2e;
+            --panel-border: #243048;
+            --accent: #f59e0b;
+            --accent-glow: rgba(245, 158, 11, 0.3);
+            --danger: #ef4444;
+            --success: #10b981;
+            --info: #38bdf8;
+            --purple: #a855f7;
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030712;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Mobile Shell */
+        #game-app {
+            width: 100%;
+            max-width: 440px;
+            height: 100vh;
+            max-height: 940px;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--panel-border);
+        }
+
+        @media (min-width: 460px) {
+            #game-app {
+                height: 94vh;
+                border-radius: 28px;
+                box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            }
+        }
+
+        /* Top HUD Bar */
+        .hud-header {
+            background: #0f172a;
+            border-bottom: 2px solid var(--panel-border);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 20;
+        }
+
+        .time-weather-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .time-badge {
+            background: #1e293b;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: var(--accent);
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .weather-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #1e293b;
+            color: var(--info);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .stat-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            padding: 5px 4px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .stat-val {
+            font-weight: 800;
+            font-size: 12.5px;
+            color: #fff;
+            margin-top: 1px;
+        }
+
+        /* Live Zalo Notification Stream */
+        .zalo-stream {
+            background: #0d2847;
+            border-left: 3px solid #38bdf8;
+            padding: 6px 10px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #bae6fd;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .zalo-stream .sender {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* Main Game Content Area */
+        #game-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        /* Office Scene & Autonomous NPC Cards */
+        .office-scene {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .npc-desk-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .npc-desk-card:active {
+            transform: scale(0.98);
+            border-color: var(--accent);
+        }
+
+        .npc-avatar-box {
+            position: relative;
+            width: 46px;
+            height: 46px;
+            background: #1e293b;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            border: 2px solid var(--panel-border);
+            flex-shrink: 0;
+        }
+
+        .npc-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid #000;
+        }
+
+        .npc-status-dot.busy { background: var(--danger); }
+        .npc-status-dot.idle { background: var(--accent); }
+
+        .npc-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .npc-name-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .npc-name {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .npc-role-tag {
+            font-size: 9.5px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #1e293b;
+            color: var(--text-dim);
+        }
+
+        .npc-action-bubble {
+            font-size: 11.5px;
+            color: #cbd5e1;
+            background: #090e17;
+            padding: 5px 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+            border-left: 2px solid var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Ride Minigame Card */
+        .bike-ride-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .road-canvas-box {
+            background: #050811;
+            height: 120px;
+            border-radius: 12px;
+            border: 1px dashed #334155;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bike-rider {
+            font-size: 36px;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0px) rotate(0deg); }
+            to { transform: translateY(-6px) rotate(-3deg); }
+        }
+
+        .road-hazard {
+            font-size: 20px;
+            position: absolute;
+            right: -30px;
+            animation: moveLeft 2.5s infinite linear;
+        }
+
+        @keyframes moveLeft {
+            0% { right: -30px; }
+            100% { right: 110%; }
+        }
+
+        /* Action Buttons */
+        .btn {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+
+        .btn-info {
+            background: #0284c7;
+            color: #fff;
+            border-color: #0284c7;
+        }
+
+        /* Modal Popup */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 18px;
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* Bottom Tab Navigation */
+        .bottom-nav {
+            background: #0f172a;
+            border-top: 1px solid var(--panel-border);
+            padding: 8px 10px 14px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            z-index: 20;
+        }
+
+        .tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-dim);
+            font-size: 10px;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px 2px;
+            border-radius: 8px;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .tab-icon {
+            font-size: 18px;
+        }
+
+        /* Shake Effect */
+        .shake-screen {
+            animation: shakeAnim 0.35s ease;
+        }
+
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .lightning-bg {
+            position: absolute;
+            inset: 0;
+            background: rgba(239, 68, 68, 0.4);
+            pointer-events: none;
+            z-index: 90;
+            animation: flashFade 0.3s ease-out;
+        }
+
+        @keyframes flashFade {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-app">
+    <div id="fx-lightning"></div>
+
+    <!-- HUD Header -->
+    <div class="hud-header">
+        <div class="time-weather-row">
+            <div class="time-badge">
+                <span>⏰</span>
+                <span id="ui-day">Thứ 6</span> • <span id="ui-clock">08:00</span>
+            </div>
+            <div class="weather-badge" id="ui-weather-badge">
+                <span id="ui-weather-icon">🌧️</span>
+                <span id="ui-weather-text">Mưa Rào Ngập Đường</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Ví Lương</div>
+                <div class="stat-val" id="ui-wallet" style="color:var(--accent);">4.0Tr</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Thu Quỹ Xã</div>
+                <div class="stat-val" id="ui-quota">0/150Tr</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tinh Thần</div>
+                <div class="stat-val" id="ui-sanity" style="color:var(--success);">100%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Sếp Nộ Khí</div>
+                <div class="stat-val" id="ui-rage" style="color:var(--danger);">15%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Zalo Notification -->
+    <div class="zalo-stream" onclick="openZaloModal()">
+        <span>📱</span>
+        <span class="sender" id="zalo-sender">Nhóm Chi Nhánh:</span>
+        <span id="zalo-msg">Nguyễn: "Hôm nay ai về trễ tự giác trừ 50k!"</span>
+    </div>
+
+    <!-- Main Viewport -->
+    <div id="game-content">
+        <!-- Rendered dynamically by active tab -->
+    </div>
+
+    <!-- Bottom Tabs -->
+    <div class="bottom-nav">
+        <div class="tab-btn active" onclick="switchTab('office')">
+            <span class="tab-icon">🏢</span>
+            <span>Văn Phòng</span>
+        </div>
+        <div class="tab-btn" onclick="switchTab('ride')">
+            <span class="tab-icon">🛵</span>
+            <span>Đi Cụm Xã</span>
+        </div>
+        <div class="tab-btn" onclick="switchTab('collection')">
+            <span class="tab-icon">💰</span>
+            <span>Thu Nợ</span>
+        </div>
+        <div class="tab-btn" onclick="switchTab('party')">
+            <span class="tab-icon">🍻</span>
+            <span>Bàn Nhậu</span>
+        </div>
+    </div>
+
+    <!-- Modal Dialog -->
+    <div class="modal-overlay" id="game-modal">
+        <div class="modal-box" id="modal-body">
+            <!-- Modal Content -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- WEB AUDIO SYNTHESIS ---
+    const Audio = {
+        ctx: null,
+        init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+        play(freq, type = 'sine', duration = 0.1) {
+            try {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            } catch(e){}
+        },
+        click() { this.play(550, 'triangle', 0.06); },
+        success() { 
+            this.play(523, 'sine', 0.08); 
+            setTimeout(() => this.play(659, 'sine', 0.12), 80);
+        },
+        alarm() {
+            this.play(200, 'sawtooth', 0.3);
+        }
+    };
+
+    // --- GAME REALTIME ENGINE ---
+    const Game = {
+        timeHour: 8,
+        timeMinute: 0,
+        dayName: "Thứ 6 (Họp Chi Nhánh)",
+        weather: { type: 'rain', name: 'Mưa Rào Ngập Đường', icon: '🌧️', staminaDrain: 1.5 },
+        wallet: 4000000,
+        quota: 0,
+        quotaTarget: 150000000,
+        sanity: 100,
+        bossRage: 15,
+        thangAffinity: 50,
+        thangEvidence: 0,
+        bikeFuel: 80,
+        activeTab: 'office',
+        zaloHistory: []
+    };
+
+    // --- AUTONOMOUS NPC AI SYSTEM ---
+    const NPCs = [
+        {
+            id: 'huong',
+            name: 'Chị Hướng',
+            role: 'Giám Đốc Chi Nhánh',
+            avatar: '👑',
+            state: 'idle',
+            routine: [
+                { time: 8, action: 'Soi gương dặm phấn đầu ngày', status: 'idle' },
+                { time: 10, action: 'Cùng Nguyễn đi ô tô ăn sáng & cà phê Đầm Vạc', status: 'busy' },
+                { time: 14, action: 'Thử váy mới đặt online, khen Nguyễn tinh tế', status: 'idle' },
+                { time: 17, action: 'Đứng chống nạnh kiểm tra tiến độ nộp quỹ', status: 'busy' }
+            ],
+            currentAction: 'Soi gương dặm phấn đầu ngày',
+            dialogues: [
+                "Giám sát Nguyễn nói không có sai đâu, các cô nhìn lại tác phong đi!",
+                "Có mấy đồng bạc lẻ thu cũng không xong thì làm được tích sự gì!",
+                "Thắm nó ốm đau thế mà vẫn chu đáo biếu tôi túi bưởi, các cô học tập đi!"
+            ]
+        },
+        {
+            id: 'nguyen',
+            name: 'Nguyễn Giám Sát',
+            role: 'Bất Tài & Mách Lẻo',
+            avatar: '👔',
+            state: 'busy',
+            routine: [
+                { time: 8, action: 'Lượn lờ soi biên lai bấm ghim lệch lề', status: 'busy' },
+                { time: 10, action: 'Lái ô tô chở Chị Hướng đi cà phê', status: 'busy' },
+                { time: 14, action: 'Bắt bẻ bảng công tác phí của Kế Toán Thắng', status: 'idle' },
+                { time: 16, action: 'Canh me ở cửa bắt lỗi nhân viên về muộn', status: 'busy' }
+            ],
+            currentAction: 'Lượn lờ soi biên lai bấm ghim lệch',
+            dialogues: [
+                "Tôi thấy anh Thắng cân đối số dư tròn trịa thế này là rất phi logic!",
+                "Tác phong phòng này lề mề quá, tôi sẽ lập biên bản trừ điểm thi đua.",
+                "Chị Hướng uống thêm chén nữa đi, em luôn bên cạnh chị mà..."
+            ]
+        },
+        {
+            id: 'tham',
+            name: 'Chị Thắm (P.02)',
+            role: 'Nữ Hoàng Nước Mắt',
+            avatar: '🎭',
+            state: 'idle',
+            routine: [
+                { time: 8, action: 'Dâng túi bưởi Yên Lạc nịnh Chị Hướng', status: 'idle' },
+                { time: 11, action: 'Cầm khăn chấm mắt kể lể tụt huyết áp', status: 'idle' },
+                { time: 14, action: 'Lén đẩy xấp hồ sơ sang bàn em Bông', status: 'busy' },
+                { time: 16, action: 'Ngồi lướt TikTok phòng máy lạnh', status: 'idle' }
+            ],
+            currentAction: 'Dâng túi bưởi Yên Lạc nịnh Chị Hướng',
+            dialogues: [
+                "Chị mắng em một câu mà tim em đau như cắt từng khúc ruột...",
+                "Em ơi chị đang hoa mắt chóng mặt, em lội bùn đi thu hộ chị nhé...",
+                "Trong phòng này chị thương em nhất mới giao việc quan trọng cho em đấy!"
+            ]
+        },
+        {
+            id: 'tho',
+            name: 'Thơ Tiểu Thư',
+            role: 'Chuyên Viên Sống Ảo',
+            avatar: '💅',
+            state: 'idle',
+            routine: [
+                { time: 8, action: 'Chụp ảnh check-in móng tay đính đá mới', status: 'idle' },
+                { time: 12, action: 'Rủ rê đồng nghiệp gọi trà sữa trân châu', status: 'idle' },
+                { time: 15, action: 'Kêu đau tay không gõ được phím, nhờ Bông làm hộ', status: 'busy' }
+            ],
+            currentAction: 'Chụp ảnh check-in móng tay đính đá mới',
+            dialogues: [
+                "Bông ơi chị mới làm bộ móng 500k gõ phím cộm quá, nhập hộ chị nhé!",
+                "Đi làm lương ba đồng mà bắt lội bùn hỏng hết đôi guốc Zara của em!",
+                "Hôm nay liên hoan ở Đầm Vạc em mặc váy nào chụp ảnh đẹp nhỉ?"
+            ]
+        },
+        {
+            id: 'bong',
+            name: 'Bông Bé Bỏng',
+            role: 'Em Út Cày Deadline',
+            avatar: '🥺',
+            state: 'busy',
+            burnout: 70,
+            routine: [
+                { time: 8, action: 'Gõ cọc cạch 20 bộ hồ sơ tồn đọng', status: 'busy' },
+                { time: 13, action: 'Vừa ăn bánh mì vừa gõ báo cáo hộ Thơ', status: 'busy' },
+                { time: 17, action: 'Mắt đỏ hoe vì kiệt sức, sắp khóc trong WC', status: 'busy' }
+            ],
+            currentAction: 'Gõ cọc cạch 20 bộ hồ sơ tồn đọng',
+            dialogues: [
+                "Dạ... em nhập sắp xong 5 xã cho chị Thơ rồi ạ...",
+                "Hôm qua em thức đến 1h sáng làm bảng kê cho chị Thắm...",
+                "Em mệt quá, chắc tháng sau em xin nghỉ thôi..."
+            ]
+        },
+        {
+            id: 'thang',
+            name: 'Thắng Kế Toán',
+            role: 'Tường Thành Chuyên Môn',
+            avatar: '☕',
+            state: 'busy',
+            routine: [
+                { time: 8, action: 'Nhâm nhi cà phê đen đặc, đối chiếu quỹ', status: 'idle' },
+                { time: 14, action: 'In 20 trang sao kê đập vào mặt Nguyễn', status: 'busy' },
+                { time: 18, action: 'Cày đêm một mình, thu thập bằng chứng kiểm toán', status: 'busy' }
+            ],
+            currentAction: 'Nhâm nhi cà phê đen đặc, đối chiếu quỹ',
+            dialogues: [
+                "Số liệu kế toán chuẩn từng xu. Anh Nguyễn không biết thì đừng nói bừa.",
+                "Cứ yên tâm làm đúng quy chế, có tôi bảo lãnh dòng tiền.",
+                "Tôi đã lưu lại 5 phiếu xăng xe khống của Nguyễn rồi."
+            ]
+        }
+    ];
+
+    // --- REAL-TIME TICK LOOP ---
+    function gameTick() {
+        Game.timeMinute += 10;
+        if (Game.timeMinute >= 60) {
+            Game.timeMinute = 0;
+            Game.timeHour++;
+            onHourPassed();
+        }
+
+        // Update NPCs AI Routines
+        NPCs.forEach(npc => {
+            if (npc.routine) {
+                const currentTask = [...npc.routine].reverse().find(r => Game.timeHour >= r.time);
+                if (currentTask && npc.currentAction !== currentTask.action) {
+                    npc.currentAction = currentTask.action;
+                    npc.state = currentTask.status;
+                    // Trigger dynamic Zalo msg
+                    if (Math.random() < 0.4) {
+                        pushZalo(npc.name, npc.dialogues[Math.floor(Math.random() * npc.dialogues.length)]);
+                    }
+                }
+            }
+        });
+
+        // 17:00 Boss check
+        if (Game.timeHour === 17 && Game.timeMinute === 0 && Game.quota < Game.quotaTarget) {
+            triggerBossRage();
+        }
+
+        updateHUD();
+        if (Game.activeTab === 'office') renderOffice();
+    }
+
+    function onHourPassed() {
+        // Random Weather Change
+        if (Game.timeHour === 12) {
+            Game.weather = { type: 'sun', name: 'Nắng Gắt 40°C Say Nắng', icon: '☀️', staminaDrain: 1.8 };
+        } else if (Game.timeHour === 18) {
+            Game.weather = { type: 'night', name: 'Đêm Muộn Đèn Wave Mù Mịt', icon: '🌙', staminaDrain: 1.4 };
+        }
+    }
+
+    function pushZalo(sender, msg) {
+        document.getElementById('zalo-sender').innerText = sender + ':';
+        document.getElementById('zalo-msg').innerText = `"${msg}"`;
+        Game.zaloHistory.unshift({ sender, msg, time: `${String(Game.timeHour).padStart(2,'0')}:${String(Game.timeMinute).padStart(2,'0')}` });
+    }
+
+    function updateHUD() {
+        document.getElementById('ui-day').innerText = Game.dayName;
+        document.getElementById('ui-clock').innerText = `${String(Game.timeHour).padStart(2,'0')}:${String(Game.timeMinute).padStart(2,'0')}`;
+        document.getElementById('ui-weather-icon').innerText = Game.weather.icon;
+        document.getElementById('ui-weather-text').innerText = Game.weather.name;
+
+        document.getElementById('ui-wallet').innerText = (Game.wallet / 1000000).toFixed(1) + 'Tr';
+        document.getElementById('ui-quota').innerText = (Game.quota / 1000000).toFixed(0) + '/' + (Game.quotaTarget / 1000000) + 'Tr';
+        document.getElementById('ui-sanity').innerText = Game.sanity + '%';
+        document.getElementById('ui-rage').innerText = Game.bossRage + '%';
+    }
+
+    // --- TAB RENDERING SYSTEM ---
+    function switchTab(tabId) {
+        Audio.click();
+        Game.activeTab = tabId;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const activeIdx = ['office', 'ride', 'collection', 'party'].indexOf(tabId);
+        if (activeIdx >= 0) document.querySelectorAll('.tab-btn')[activeIdx].classList.add('active');
+
+        if (tabId === 'office') renderOffice();
+        else if (tabId === 'ride') renderRide();
+        else if (tabId === 'collection') renderCollection();
+        else if (tabId === 'party') renderParty();
+    }
+
+    function renderOffice() {
+        const container = document.getElementById('game-content');
+        container.innerHTML = `
+            <div style="font-size:12px; font-weight:bold; color:var(--text-dim); display:flex; justify-content:space-between;">
+                <span>DANH SÁCH NHÂN SỰ TẠI CHI NHÁNH</span>
+                <span>Chạm vào để tương tác</span>
+            </div>
+            <div class="office-scene">
+                ${NPCs.map(npc => `
+                    <div class="npc-desk-card" onclick="interactNPC('${npc.id}')">
+                        <div class="npc-avatar-box">
+                            <span>${npc.avatar}</span>
+                            <div class="npc-status-dot ${npc.state}"></div>
+                        </div>
+                        <div class="npc-details">
+                            <div class="npc-name-row">
+                                <span class="npc-name">${npc.name}</span>
+                                <span class="npc-role-tag">${npc.role}</span>
+                            </div>
+                            <div class="npc-action-bubble">${npc.currentAction}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderRide() {
+        const container = document.getElementById('game-content');
+        container.innerHTML = `
+            <div class="bike-ride-card">
+                <div style="font-size:14px; font-weight:bold; color:var(--accent);">🛵 HÀNH TRÌNH XE MÁY LỘI BÙN</div>
+                <div class="road-canvas-box">
+                    <div class="bike-rider">🛵💨</div>
+                    <div class="road-hazard">🐕</div>
+                    <div style="position:absolute; bottom:6px; font-size:11px; color:#64748b;">Thời tiết: ${Game.weather.name}</div>
+                </div>
+                <p style="font-size:12px; color:#cbd5e1; line-height:1.4;">
+                    Đi xe Wave qua đập Đầm Vạc & ngõ lầy Vĩnh Tường. Cẩn thận chó đuổi và ngập bô chết máy!
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button class="btn btn-primary" onclick="rideTo('Vĩnh Tường')">🌾 Đến Vĩnh Tường</button>
+                    <button class="btn btn-info" onclick="rideTo('Yên Lạc')">🪵 Đến Xưởng Yên Lạc</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCollection() {
+        const container = document.getElementById('game-content');
+        container.innerHTML = `
+            <div class="bike-ride-card">
+                <div style="font-size:14px; font-weight:bold; color:var(--success);">💰 BÀN THU TIỀN XÃ ĐẠI ĐỒNG</div>
+                <p style="font-size:12px; color:#cbd5e1;">Cần gom đủ 150Tr trước 16h30 để nộp về kho quỹ.</p>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                    <div class="btn" style="justify-content:space-between;" onclick="collectHousehold('Chị Hoa Bán Rau', 4200000, 1200000)">
+                        <span>👩‍🌾 Chị Hoa (Thiếu 1.2Tr)</span>
+                        <span style="color:var(--accent);">Thu 3Tr</span>
+                    </div>
+                    <div class="btn" style="justify-content:space-between;" onclick="collectHousehold('Bác Tư Xưởng Mộc', 15000000, 0)">
+                        <span>🪵 Bác Tư Yên Lạc</span>
+                        <span style="color:var(--success);">Đủ 15Tr</span>
+                    </div>
+                    <div class="btn" style="justify-content:space-between;" onclick="collectHousehold('Chị Lan Tạp Hóa', 8000000, 0)">
+                        <span>🏪 Chị Lan Vĩnh Yên</span>
+                        <span style="color:var(--success);">Đủ 8Tr</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderParty() {
+        const container = document.getElementById('game-content');
+        container.innerHTML = `
+            <div class="bike-ride-card">
+                <div style="font-size:14px; font-weight:bold; color:#ec4899;">🍻 BÀN NHẬU CHI NHÁNH VEN HỒ ĐẦM VẠC</div>
+                <div style="font-size:40px; margin:8px 0;">🍶🍲💃</div>
+                <p style="font-size:12.5px; color:#cbd5e1; line-height:1.5;">
+                    Chị Hướng đã uống say mềm. Nguyễn nhân cơ hội choàng hẳn tay ôm chặt eo Chị Hướng thì thầm to nhỏ trước mặt toàn thể nhân viên!
+                </p>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                    <button class="btn btn-primary" onclick="partyAction('record')">📸 Lén quay video bằng chứng cho Thắng</button>
+                    <button class="btn" onclick="partyAction('phone')">📱 Cúi gầm mặt vờ bấm điện thoại ăn cỗ</button>
+                    <button class="btn btn-danger" onclick="partyAction('cheer')">🥂 Hùa theo nâng ly khen Nguyễn chu đáo</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- INTERACTION HANDLERS ---
+    function interactNPC(id) {
+        Audio.click();
+        const npc = NPCs.find(n => n.id === id);
+        let actionBtns = '';
+
+        if (id === 'thang') {
+            actionBtns = `
+                <button class="btn btn-primary" onclick="buyCoffeeForThang()">☕ Mua cà phê đặc cho Thắng (-35k, +20 Thân thiết)</button>
+            `;
+        } else if (id === 'bong') {
+            actionBtns = `
+                <button class="btn btn-info" onclick="helpBong()">🥤 Tặng trà sữa & gánh bớt 3 bộ hồ sơ (-40k, cứu Bông)</button>
+            `;
+        } else if (id === 'tham') {
+            actionBtns = `
+                <button class="btn btn-danger" onclick="counterTham()">🎭 Bóc mẽ chiêu vờ tụt huyết áp trước sếp</button>
+            `;
+        } else if (id === 'nguyen') {
+            actionBtns = `
+                <button class="btn btn-primary" onclick="bribeNguyen()">🍬 Tặng kẹo lạc Yên Lạc (-30k tiền túi)</button>
+            `;
+        }
+
+        openModal(`
+            <div style="text-align:center;">
+                <div style="font-size:40px; margin-bottom:6px;">${npc.avatar}</div>
+                <h3 style="color:#fff; font-size:16px;">${npc.name}</h3>
+                <p style="font-size:11px; color:var(--accent); margin-bottom:8px;">${npc.role}</p>
+                <div style="background:#090e17; padding:10px; border-radius:8px; font-size:12px; color:#cbd5e1; margin-bottom:12px; text-align:left;">
+                    "${npc.dialogues[Math.floor(Math.random()*npc.dialogues.length)]}"
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${actionBtns}
+                    <button class="btn" onclick="closeModal()">Đóng</button>
+                </div>
+            </div>
+        `);
+    }
+
+    function buyCoffeeForThang() {
+        Game.wallet -= 35000;
+        Game.thangAffinity += 20;
+        Game.thangEvidence += 25;
+        Audio.success();
+        closeModal();
+        pushZalo('Thắng Kế Toán', 'Cảm ơn ly cà phê nhé! Tôi đã khóa số liệu và lưu thêm 1 chứng từ gian lận của Nguyễn.');
+        checkWinCondition();
+    }
+
+    function helpBong() {
+        Game.wallet -= 40000;
+        Game.sanity += 15;
+        const bong = NPCs.find(n => n.id === 'bong');
+        if (bong) bong.burnout -= 30;
+        Audio.success();
+        closeModal();
+        pushZalo('Bông Bé Bỏng', 'Em cảm ơn anh/chị nhiều lắm ạ, em tưởng nay em ngất ở văn phòng rồi...');
+    }
+
+    function counterTham() {
+        Game.sanity += 10;
+        Audio.success();
+        closeModal();
+        pushZalo('Chị Thắm', 'Ớ kìa... chị nói thế thôi chứ chị vẫn đang cố gắng vì quỹ mà...');
+    }
+
+    function bribeNguyen() {
+        Game.wallet -= 30000;
+        Game.bossRage -= 10;
+        Audio.click();
+        closeModal();
+        pushZalo('Nguyễn Giám Sát', 'Được rồi, lần này tôi tạm bỏ qua lỗi bấm ghim nhé!');
+    }
+
+    function rideTo(dest) {
+        Audio.click();
+        Game.sanity -= 10;
+        pushZalo('Thông báo di chuyển', `Bạn đã lái xe lội bùn đến ${dest}. Xe bị dính bùn nhưng hồ sơ an toàn!`);
+        switchTab('collection');
+    }
+
+    function collectHousehold(name, total, shortage) {
+        if (shortage > 0) {
+            openModal(`
+                <div style="text-align:center;">
+                    <div style="font-size:36px;">👩‍🌾</div>
+                    <h3 style="margin:8px 0;">${name} Thiếu ${shortage/1000}k</h3>
+                    <p style="font-size:12px; color:#cbd5e1; margin-bottom:12px;">Chị Hoa xin khất mai nộp. Nếu không bù đủ trước 16h30, sếp Hướng sẽ nổi lôi đình!</p>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button class="btn btn-primary" onclick="advanceMoney(${shortage}, ${total})">💸 Ứng Lương Bù Ngay (-${shortage/1000}k ví)</button>
+                        <button class="btn btn-danger" onclick="refuseShortage(${total - shortage})">⏳ Ngồi Lỳ Đòi (Nguy cơ chậm giờ)</button>
+                    </div>
+                </div>
+            `);
+        } else {
+            Game.quota += total;
+            Audio.success();
+            pushZalo('Thu tiền thành công', `Đã gom đủ ${(total/1000000).toFixed(1)}Tr từ ${name}!`);
+            checkWinCondition();
+            renderCollection();
+        }
+    }
+
+    function advanceMoney(shortage, total) {
+        Game.wallet -= shortage;
+        Game.quota += total;
+        Audio.success();
+        closeModal();
+        pushZalo('Ví cá nhân', `Đã tự ứng ${(shortage/1000)}k bù vào quỹ xã.`);
+        checkWinCondition();
+        renderCollection();
+    }
+
+    function refuseShortage(got) {
+        Game.quota += got;
+        Game.bossRage += 15;
+        Audio.alarm();
+        closeModal();
+        pushZalo('Chị Hướng', 'Tại sao P.04 thu tiền chậm thế hả?!');
+        renderCollection();
+    }
+
+    function partyAction(type) {
+        if (type === 'record') {
+            Audio.success();
+            Game.thangEvidence += 50;
+            pushZalo('Kế Toán Thắng', 'Đã nhận được video bàn nhậu! Đủ bằng chứng gửi đoàn kiểm toán Tổng công ty!');
+            checkWinCondition();
+        } else if (type === 'phone') {
+            Audio.click();
+            Game.sanity += 10;
+            pushZalo('Bàn nhậu', 'Bạn cúi mặt ăn đĩa lòng rán, né trọn drama thị phi.');
+        } else if (type === 'cheer') {
+            Audio.click();
+            Game.bossRage -= 20;
+            Game.sanity -= 20;
+            pushZalo('Chị Hướng', 'Các em biết điều đấy, mai tôi duyệt chi thêm công tác phí!');
+        }
+        switchTab('office');
+    }
+
+    function triggerBossRage() {
+        Audio.alarm();
+        document.getElementById('game-app').classList.add('shake-screen');
+        const fx = document.getElementById('fx-lightning');
+        fx.className = 'lightning-bg';
+        setTimeout(() => {
+            document.getElementById('game-app').classList.remove('shake-screen');
+            fx.className = '';
+        }, 400);
+
+        openModal(`
+            <div style="text-align:center;">
+                <div style="font-size:48px;">⚡👑⚡</div>
+                <h3 style="color:var(--danger); font-size:16px;">CHỊ HƯỚNG NỔI LÔI ĐÌNH!</h3>
+                <p style="font-size:12.5px; color:#f87171; line-height:1.5; margin:10px 0;">
+                    "CÁC CÔ ĂN LƯƠNG QUỸ ĐỂ LÀM CẢNH À?! Có mấy đồng bạc lẻ thu cả ngày cũng không xong!"
+                </p>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${Game.thangAffinity >= 40 ? `
+                        <button class="btn btn-primary" onclick="resolveBossWithThang()">🛡️ Nhờ Thắng Chìa Sao Kê Cứu Nguy</button>
+                    ` : ''}
+                    <button class="btn btn-danger" onclick="takeBossPunish()">😭 Chịu Phạt Trừ 300k Lương</button>
+                </div>
+            </div>
+        `);
+    }
+
+    function resolveBossWithThang() {
+        Game.bossRage = 10;
+        Audio.success();
+        closeModal();
+        pushZalo('Kế Toán Thắng', 'Bảng cân đối đã khớp 100%. Chị Hướng dặm phấn rồi đi về.');
+    }
+
+    function takeBossPunish() {
+        Game.wallet -= 300000;
+        Game.sanity -= 30;
+        Audio.alarm();
+        closeModal();
+        if (Game.wallet < 0 || Game.sanity <= 0) renderGameOver('bad');
+    }
+
+    function checkWinCondition() {
+        if (Game.thangEvidence >= 100) {
+            renderGameOver('funny');
+        } else if (Game.quota >= Game.quotaTarget && Game.sanity > 50) {
+            renderGameOver('true');
+        }
+    }
+
+    function renderGameOver(type) {
+        let title = "", desc = "", icon = "";
+        if (type === 'bad') {
+            icon = "💸😭";
+            title = "KẾT CỤC: KHÁNH KIỆT & NGHỈ VIỆC";
+            desc = "Bạn đã cạn sạch ví tiền vì liên tục ứng lương bù nợ cho xã, lại chịu không thấu những màn đay nghiến sấm sét của Chị Hướng. Bạn uất ức nộp đơn thôi việc!";
+        } else if (type === 'funny') {
+            icon = "🕵️‍♂️🎉";
+            title = "KẾT THÚC HÀI HƯỚC: NGUYỄN BỊ ĐUỔI VIỆC";
+            desc = "Nhờ video bàn nhậu và chứng từ kê khống do bạn và Thắng cung cấp, Nguyễn đã bị đoàn kiểm toán Tổng công ty bắt quả tang! Chị Hướng vội vã đuổi việc Nguyễn để giữ ghế!";
+        } else if (type === 'true') {
+            icon = "🏆🥇";
+            title = "TRUE ENDING: PHÒNG SỐ 1 TOÀN TỈNH";
+            desc = "Bạn cùng Kế Toán Thắng và em Bông thu hồi đủ 150 triệu, bóc mẽ thói giả bệnh của Chị Thắm. Chị Hướng dù muốn đay nghiến cũng không tìm ra lý do!";
+        }
+
+        openModal(`
+            <div style="text-align:center;">
+                <div style="font-size:48px;">${icon}</div>
+                <h3 style="color:var(--accent); font-size:16px; margin:8px 0;">${title}</h3>
+                <p style="font-size:12px; color:#cbd5e1; line-height:1.5; margin-bottom:14px;">${desc}</p>
+                <button class="btn btn-primary" style="width:100%;" onclick="location.reload()">🔄 Chơi Lại Từ Đầu</button>
+            </div>
+        `);
+    }
+
+    function openModal(content) {
+        document.getElementById('modal-body').innerHTML = content;
+        document.getElementById('game-modal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('game-modal').classList.remove('active');
+    }
+
+    function openZaloModal() {
+        openModal(`
+            <div>
+                <h3 style="font-size:14px; color:#38bdf8; margin-bottom:8px;">📱 NHẬT KÝ GROUP ZALO CHI NHÁNH</h3>
+                <div style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; font-size:11.5px;">
+                    ${Game.zaloHistory.map(z => `
+                        <div style="background:#090e17; padding:6px 8px; border-radius:6px;">
+                            <span style="color:var(--accent); font-weight:bold;">[${z.time}] ${z.sender}:</span>
+                            <span style="color:#cbd5e1;">${z.msg}</span>
+                        </div>
+                    `).join('') || '<div style="color:#64748b;">Chưa có tin nhắn mới.</div>'}
+                </div>
+                <button class="btn" style="width:100%; margin-top:10px;" onclick="closeModal()">Đóng</button>
+            </div>
+        `);
+    }
+
+    // Start Simulation Loop (1 sec = 10 game mins)
+    window.addEventListener('click', () => Audio.init(), { once: true });
+    setInterval(gameTick, 1000);
+    renderOffice();
+    updateHUD();
+</script>
+</body>
+</html>
